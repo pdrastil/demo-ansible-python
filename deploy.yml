@@ -1,0 +1,36 @@
+---
+- name: Demo deployment
+  hosts: webservers
+  become: true
+  gather_facts: True
+  pre_tasks:
+    - fail: msg=stop
+    - name: Provision self-signed certificates
+      block:
+        - name: Ensure SSL directory exists
+          file:
+            path: "{{ item }}"
+            state: directory
+          loop:
+            - /etc/ssl/certs
+            - /etc/ssl/private
+
+        - name: Generate a private key
+          openssl_privatekey:
+            path: "/etc/ssl/private/test.key"
+
+        - name: Generate an certificate signing request
+          openssl_csr:
+            path: /etc/ssl/private/test.csr
+            privatekey_path: /etc/ssl/private/test.key
+            common_name: example.com
+
+        - name: Generate a self-signed certificate
+          openssl_certificate:
+            path: /etc/ssl/certs/test.pem
+            csr_path: /etc/ssl/private/test.csr
+            privatekey_path: /etc/ssl/private/test.key
+            provider: selfsigned
+  roles:
+    - webapp
+    - nginx
