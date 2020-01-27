@@ -1,0 +1,99 @@
+---
+- name: Include OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+      - "{{ ansible_distribution }}-{{ ansible_distribution_release }}.yml"
+      - "{{ ansible_distribution }}.yml"
+      - "{{ ansible_os_family }}.yml"
+      paths:
+        - "{{ role_path }}/vars"
+
+- name: Perform OS specific tasks
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+      - "{{ ansible_distribution }}-{{ ansible_distribution_release }}.yml"
+      - "{{ ansible_distribution }}.yml"
+      - "{{ ansible_os_family }}.yml"
+      skip: true
+
+- name: Install OS dependencies
+  package:
+    name: "{{ os_packages }}"
+    state: present
+
+- name: Install virtualenv
+  pip:
+    name: virtualenv
+    state: present
+
+- name: Create supervisor service directory
+  file:
+    path: /etc/supervisor/conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Configure supervisor service directory
+  lineinfile:
+    path: "{{ supervisor_conf_path }}"
+    insertafter: '^[include]$'
+    line: files = /etc/supervisor/conf.d/*.conf
+    state: present
+
+- name: Start supervisor service
+  service:
+    name: "{{ supervisor_service }}"
+    state: started
+    enabled: true
+
+- name: Deploy web application
+  git:
+    repo: 'https://github.com/pdrastil/flask-demo.git'
+    dest: "{{ app_home }}"
+    version: "{{ app_version }}"
+
+- name: Install web application dependencies
+  pip:
+    requirements: "{{ app_home }}/requirements.txt"
+    virtualenv: "{{ app_virtualenv }}"
+    virtualenv_python: python3
+
+- name: Install webserver
+  pip:
+    name: gunicorn
+    virtualenv: "{{ app_virtualenv }}"
+    virtualenv_python: python3
+
+- name: Add application user
+  user:
+    name: "{{ app_user }}"
+    comment: "{{ app_user }} webserver"
+    home: "{{ app_home }}"
+    state: present
+
+- name: Set application ownership
+  file:
+    path: "{{ app_home }}"
+    owner: "{{ app_user }}"
+    recurse: true
+
+- name: Configure supervisor
+  template:
+    src: flask-demo.conf.j2
+    dest: /etc/supervisor/conf.d/flask-demo.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Load supervisor configuration
+  supervisorctl:
+    name: flask-demo
+    state: present
+
+- name: Start web application
+  supervisorctl:
+    name: flask-demo
+    state: started

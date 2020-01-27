@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  author: Petr Drastil
+  description: Deploys demo Flask application
+  license: license (BSD, MIT)
+  min_ansible_version: 2.4
+  platforms:
+    - name: EL
+      versions:
+        - 7
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - bionic
+  galaxy_tags:
+    - flask
+    - web
+    - demo

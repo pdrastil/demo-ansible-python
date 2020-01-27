@@ -1,0 +1,8 @@
+[program:flask-demo]
+command={{ app_virtualenv }}/bin/gunicorn -b localhost:8080 -w 4 app:app
+directory={{ app_home }}
+user={{ app_user }}
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true

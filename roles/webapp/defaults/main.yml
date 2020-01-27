@@ -1,0 +1,5 @@
+---
+app_user: demo
+app_home: /var/flask-demo
+app_version: master
+app_virtualenv: "{{ app_home }}/venv"

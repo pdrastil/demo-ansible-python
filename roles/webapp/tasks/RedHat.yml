@@ -1,0 +1,4 @@
+---
+- name: Install EPEL
+  package:
+    name: epel-release
