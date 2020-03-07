@@ -23,6 +23,13 @@
     name: "{{ os_packages }}"
     state: present
 
+- name: Upgrade PIP
+  pip:
+    name:
+    - pip
+    - requests
+    extra_args: --upgrade
+
 - name: Install virtualenv
   pip:
     name: virtualenv
